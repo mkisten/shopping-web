@@ -613,13 +613,138 @@ textarea {
 
 .login-screen {
   min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-layout {
+  width: min(1180px, 100%);
   display: grid;
-  place-items: center;
-  padding: 32px;
+  grid-template-columns: 1.2fr 420px;
+  gap: 22px;
+  position: relative;
+  z-index: 2;
+}
+
+.landing-panel {
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, rgba(22, 27, 42, 0.93) 0%, rgba(15, 18, 28, 0.95) 100%);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  animation: landingReveal 0.55s ease both;
+}
+
+.landing-title {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.1;
+  margin: 14px 0 10px;
+}
+
+.landing-lead {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+.landing-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.landing-feature-card {
+  border: 1px solid rgba(78, 168, 222, 0.25);
+  background: linear-gradient(140deg, rgba(78, 168, 222, 0.16), rgba(249, 199, 79, 0.1));
+  border-radius: 14px;
+  padding: 14px;
+  transform: translateY(0);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(249, 199, 79, 0.45);
+}
+
+.landing-feature-card h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.landing-feature-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.alice-block {
+  margin-top: 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(249, 199, 79, 0.25);
+  background: rgba(27, 32, 48, 0.72);
+  padding: 14px;
+}
+
+.alice-block h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.alice-block p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.alice-commands {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.alice-command-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #131a29;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.landing-glow {
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.42;
+  animation: glowDrift 7s ease-in-out infinite alternate;
+}
+
+.landing-glow-left {
+  top: -100px;
+  left: -80px;
+  background: rgba(78, 168, 222, 0.5);
+}
+
+.landing-glow-right {
+  right: -90px;
+  bottom: -120px;
+  background: rgba(249, 132, 74, 0.48);
 }
 
 .login-card {
-  width: min(520px, 100%);
+  width: 100%;
   padding: 32px;
   border-radius: 24px;
   background: linear-gradient(160deg, #1d2234 0%, #12151f 100%);
@@ -636,6 +761,26 @@ textarea {
 .login-card p {
   color: var(--muted);
   margin-bottom: 20px;
+}
+
+@keyframes landingReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowDrift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(8px, -8px, 0) scale(1.06);
+  }
 }
 
 .link-box {
@@ -739,6 +884,38 @@ textarea {
 
   .main {
     padding: 20px 16px 80px;
+  }
+
+  .login-screen {
+    align-items: flex-start;
+    padding: 16px 12px 24px;
+  }
+
+  .login-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .landing-panel {
+    padding: 18px 16px;
+  }
+
+  .landing-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-title {
+    font-size: clamp(24px, 8vw, 32px);
+  }
+
+  .landing-glow {
+    width: 220px;
+    height: 220px;
+    opacity: 0.3;
+  }
+
+  .login-card {
+    padding: 22px 16px;
   }
 
   .topbar {

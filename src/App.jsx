@@ -5,6 +5,16 @@ import { getCache, setCache, clearCache } from "./cache.js";
 const TOKEN_KEY = "shopping_token";
 const DEVICE_KEY = "shopping_device_id";
 const lastListKey = (groupId) => `shopping_last_list_${groupId}`;
+const ALICE_COMMANDS = [
+  "Группы",
+  "Группа 1",
+  "Списки",
+  "Список продукты",
+  "Добавь молоко",
+  "Отметь хлеб",
+  "Удали покупку 2",
+  "Отчет"
+];
 
 function getOrCreateDeviceId() {
   const existing = localStorage.getItem(DEVICE_KEY);
@@ -1074,44 +1084,81 @@ export default function App() {
   if (!token) {
     return (
       <div className="login-screen">
-        <div className="login-card">
-          <div className="badge">Shopping lists</div>
-          <h1>Списки покупок</h1>
-          <p>Войди через Telegram, чтобы создавать группы, списки и покупать вместе.</p>
-          <div className="row">
-            <button className="btn" onClick={handleLogin} disabled={authLoading}>
-              {authLoading ? "Создаём сессию..." : "Войти через Telegram"}
-            </button>
-          </div>
-          {authLink ? (
-            <div className="link-box">
-              <div className="muted">Ссылка для авторизации</div>
-              <div className="row" style={{ marginTop: 8 }}>
-                {buildTelegramSchemeLink(authLink) ? (
-                  <a className="btn btn-secondary" href={buildTelegramSchemeLink(authLink)}>
-                    Открыть Telegram (tg://)
-                  </a>
-                ) : null}
-                <a className="btn btn-secondary" href={authLink} target="_blank" rel="noreferrer">
-                  Открыть бота
-                </a>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => navigator.clipboard && navigator.clipboard.writeText(authLink)}
-                >
-                  Скопировать ссылку
-                </button>
-              </div>
-              <div className="link-text">{authLink}</div>
+        <div className="landing-glow landing-glow-left" />
+        <div className="landing-glow landing-glow-right" />
+        <div className="login-layout">
+          <section className="landing-panel">
+            <div className="badge">Умные покупки</div>
+            <h1 className="landing-title">Один список для семьи, веба, Telegram и Алисы</h1>
+            <p className="landing-lead">
+              Веди общие покупки в реальном времени: добавляй товары, отмечай выполненное, фиксируй цены,
+              смотри сводку трат и взаиморасчеты по участникам.
+            </p>
+            <div className="landing-feature-grid">
+              <article className="landing-feature-card">
+                <h3>Синхронизация без перезагрузки</h3>
+                <p>SSE обновляет группы, списки и покупки у всех участников сразу.</p>
+              </article>
+              <article className="landing-feature-card">
+                <h3>Домашняя бухгалтерия в списке</h3>
+                <p>Отчет показывает, кто сколько потратил и кто кому должен, с учетом копеек.</p>
+              </article>
+              <article className="landing-feature-card">
+                <h3>Оффлайн и мобильный режим</h3>
+                <p>PWA-кэш сохраняет действия, а затем автоматически синхронизирует их при сети.</p>
+              </article>
             </div>
-          ) : null}
-          <div className="muted" style={{ marginTop: 12 }}>
-            Backend: <span className="link">{API_BASE}</span>
+            <div className="alice-block">
+              <h2>Навык Алисы</h2>
+              <p>Голосом можно открывать группы и списки, добавлять и удалять покупки, получать отчет.</p>
+              <div className="alice-commands">
+                {ALICE_COMMANDS.map((command) => (
+                  <span key={command} className="alice-command-chip">
+                    {command}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+          <div className="login-card">
+            <div className="badge">Shopping lists</div>
+            <h1>Списки покупок</h1>
+            <p>Войди через Telegram, чтобы создавать группы, списки и покупать вместе.</p>
+            <div className="row">
+              <button className="btn" onClick={handleLogin} disabled={authLoading}>
+                {authLoading ? "Создаём сессию..." : "Войти через Telegram"}
+              </button>
+            </div>
+            {authLink ? (
+              <div className="link-box">
+                <div className="muted">Ссылка для авторизации</div>
+                <div className="row" style={{ marginTop: 8 }}>
+                  {buildTelegramSchemeLink(authLink) ? (
+                    <a className="btn btn-secondary" href={buildTelegramSchemeLink(authLink)}>
+                      Открыть Telegram (tg://)
+                    </a>
+                  ) : null}
+                  <a className="btn btn-secondary" href={authLink} target="_blank" rel="noreferrer">
+                    Открыть бота
+                  </a>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => navigator.clipboard && navigator.clipboard.writeText(authLink)}
+                  >
+                    Скопировать ссылку
+                  </button>
+                </div>
+                <div className="link-text">{authLink}</div>
+              </div>
+            ) : null}
+            <div className="muted" style={{ marginTop: 12 }}>
+              Backend: <span className="link">{API_BASE}</span>
+            </div>
+            {inviteToken ? (
+              <div className="toast success">После входа приглашение будет принято автоматически.</div>
+            ) : null}
+            {authError ? <div className="toast">{authError}</div> : null}
           </div>
-          {inviteToken ? (
-            <div className="toast success">После входа приглашение будет принято автоматически.</div>
-          ) : null}
-          {authError ? <div className="toast">{authError}</div> : null}
         </div>
       </div>
     );
