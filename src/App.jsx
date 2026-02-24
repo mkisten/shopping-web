@@ -4,16 +4,27 @@ import { getCache, setCache, clearCache } from "./cache.js";
 
 const TOKEN_KEY = "shopping_token";
 const DEVICE_KEY = "shopping_device_id";
+const ANDROID_APP_URL = "https://shop.subscriptionhhapp.ru/downloads/shopping_app.apk";
 const lastListKey = (groupId) => `shopping_last_list_${groupId}`;
 const ALICE_COMMANDS = [
   "Группы",
   "Группа 1",
+  "Группа Семья",
   "Списки",
-  "Список продукты",
+  "Список 2",
+  "Список Продукты",
+  "Покупки",
   "Добавь молоко",
-  "Отметь хлеб",
+  "Добавь хлеб",
+  "Отметь 1",
+  "Отметь молоко",
   "Удали покупку 2",
-  "Отчет"
+  "Удали покупку хлеб",
+  "Создай список На неделю",
+  "Удали список 3",
+  "Отчет",
+  "Кто кому должен",
+  "Что ты умеешь"
 ];
 
 function getOrCreateDeviceId() {
@@ -1094,23 +1105,75 @@ export default function App() {
               Веди общие покупки в реальном времени: добавляй товары, отмечай выполненное, фиксируй цены,
               смотри сводку трат и взаиморасчеты по участникам.
             </p>
+            <div className="row" style={{ marginTop: 12, marginBottom: 8 }}>
+              <a className="btn" href={ANDROID_APP_URL} target="_blank" rel="noreferrer">
+                Скачать приложение для Android
+              </a>
+            </div>
             <div className="landing-feature-grid">
               <article className="landing-feature-card">
                 <h3>Синхронизация без перезагрузки</h3>
-                <p>SSE обновляет группы, списки и покупки у всех участников сразу.</p>
+                <p>Изменения у всех участников появляются почти сразу, без ручного обновления страницы.</p>
               </article>
               <article className="landing-feature-card">
                 <h3>Домашняя бухгалтерия в списке</h3>
                 <p>Отчет показывает, кто сколько потратил и кто кому должен, с учетом копеек.</p>
               </article>
               <article className="landing-feature-card">
+                <h3>Уведомления в Telegram</h3>
+                <p>Бот присылает уведомления при добавлении и удалении покупок, а также при создании новых списков.</p>
+              </article>
+              <article className="landing-feature-card">
                 <h3>Оффлайн и мобильный режим</h3>
-                <p>PWA-кэш сохраняет действия, а затем автоматически синхронизирует их при сети.</p>
+                <p>Если интернет пропал, действия не теряются и применяются автоматически после восстановления связи.</p>
               </article>
             </div>
             <div className="alice-block">
               <h2>Навык Алисы</h2>
               <p>Голосом можно открывать группы и списки, добавлять и удалять покупки, получать отчет.</p>
+              <div className="alice-setup">
+                <h3>Как подключить</h3>
+                <ol className="alice-steps">
+                  <li>Скажи: «Алиса, запусти навык Умные покупки».</li>
+                  <li>В вебе или приложении создай код привязки Алисы, нажав на кнопку Алиса и получив там код привязки.</li>
+                  <li>В навыке скажи: «привязать 1234» (вместо 1234 назови свой код).</li>
+                </ol>
+              </div>
+              <div className="alice-setup">
+                <h3>Полные команды и примеры</h3>
+                <ul className="alice-flow">
+                  <li>
+                    <strong>1) Открыть группы:</strong> скажи <code>группы</code>, затем выбери:
+                    <code>группа 1</code> или <code>группа Семья</code>.
+                  </li>
+                  <li>
+                    <strong>2) Открыть списки в группе:</strong> скажи <code>списки</code>, затем выбери:
+                    <code>список 2</code> или <code>список Продукты</code>.
+                  </li>
+                  <li>
+                    <strong>3) Прослушать покупки:</strong> скажи <code>покупки</code>.
+                  </li>
+                  <li>
+                    <strong>4) Добавить покупки:</strong> <code>добавь молоко</code>, <code>добавь хлеб</code>.
+                  </li>
+                  <li>
+                    <strong>5) Отметить купленное:</strong> <code>отметь 1</code> или <code>отметь молоко</code>.
+                  </li>
+                  <li>
+                    <strong>6) Удалить покупку:</strong> <code>удали покупку 2</code> или <code>удали покупку хлеб</code>.
+                  </li>
+                  <li>
+                    <strong>7) Работа со списками:</strong> <code>создай список На неделю</code>,
+                    <code>удали список 3</code>.
+                  </li>
+                  <li>
+                    <strong>8) Отчет по тратам:</strong> <code>отчет</code> или <code>кто кому должен</code>.
+                  </li>
+                  <li>
+                    <strong>9) Подсказка по возможностям:</strong> <code>что ты умеешь</code>.
+                  </li>
+                </ul>
+              </div>
               <div className="alice-commands">
                 {ALICE_COMMANDS.map((command) => (
                   <span key={command} className="alice-command-chip">
@@ -1121,8 +1184,8 @@ export default function App() {
             </div>
           </section>
           <div className="login-card">
-            <div className="badge">Shopping lists</div>
-            <h1>Списки покупок</h1>
+            <div className="badge">Умные покупки</div>
+            <h1>Умные покупки</h1>
             <p>Войди через Telegram, чтобы создавать группы, списки и покупать вместе.</p>
             <div className="row">
               <button className="btn" onClick={handleLogin} disabled={authLoading}>
@@ -1151,9 +1214,6 @@ export default function App() {
                 <div className="link-text">{authLink}</div>
               </div>
             ) : null}
-            <div className="muted" style={{ marginTop: 12 }}>
-              Backend: <span className="link">{API_BASE}</span>
-            </div>
             {inviteToken ? (
               <div className="toast success">После входа приглашение будет принято автоматически.</div>
             ) : null}
@@ -1176,7 +1236,7 @@ export default function App() {
       onTouchEnd={handlePullEnd}
     >
       <aside className="sidebar">
-        <div className="brand">Shopping</div>
+        <div className="brand">Умные покупки</div>
         <div className="badge">Вы вошли</div>
         <div className="sidebar-section">
           <div className="sidebar-title">Группы</div>
@@ -1290,7 +1350,7 @@ export default function App() {
             <div className="split">
               <div className="card panel-lists">
                 <div className="card-title row space-between">
-                  <h3>Списки покупок</h3>
+                  <h3>Покупки группы</h3>
                   <span className="pill pill-muted">
                     {groupDetail.lists.filter((list) => !list.archived).length} активных
                   </span>

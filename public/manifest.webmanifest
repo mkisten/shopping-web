@@ -1,6 +1,6 @@
 {
-  "name": "Shopping Lists",
-  "short_name": "Shopping",
+  "name": "Умные покупки",
+  "short_name": "Покупки",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1115",

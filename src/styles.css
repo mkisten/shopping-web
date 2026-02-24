@@ -622,9 +622,9 @@ textarea {
 }
 
 .login-layout {
-  width: min(1180px, 100%);
+  width: min(1480px, 100%);
   display: grid;
-  grid-template-columns: 1.2fr 420px;
+  grid-template-columns: 1.6fr 420px;
   gap: 22px;
   position: relative;
   z-index: 2;
@@ -655,7 +655,7 @@ textarea {
 
 .landing-feature-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -702,6 +702,53 @@ textarea {
   margin: 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.alice-setup {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(78, 168, 222, 0.25);
+  background: rgba(17, 22, 35, 0.7);
+  padding: 10px 12px;
+}
+
+.alice-setup h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.alice-steps {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  display: grid;
+  gap: 6px;
+}
+
+.alice-flow {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  display: grid;
+  gap: 8px;
+}
+
+.alice-flow li {
+  line-height: 1.45;
+}
+
+.alice-flow code {
+  display: inline-block;
+  margin-left: 6px;
+  margin-top: 3px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(78, 168, 222, 0.16);
+  border: 1px solid rgba(78, 168, 222, 0.3);
+  color: #d8f0ff;
+  font-size: 12px;
 }
 
 .alice-commands {
@@ -894,6 +941,10 @@ textarea {
   .login-layout {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .login-card {
+    order: -1;
   }
 
   .landing-panel {
