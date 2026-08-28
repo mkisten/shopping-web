@@ -110,6 +110,31 @@ function round2(value) {
   return Math.round(Number(value) * 100) / 100;
 }
 
+function round3(value) {
+  return Math.round(Number(value) * 1000) / 1000;
+}
+
+function formatQuantity(value) {
+  if (value == null || Number.isNaN(Number(value))) return "1";
+  return String(round3(Number(value))).replace(".", ",");
+}
+
+function parseQuantityInput(raw) {
+  const normalized = String(raw ?? "").replace(",", ".").trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return round3(parsed);
+}
+
+function hasCustomQuantity(item) {
+  return item.unit === "kg" || (item.quantity != null && round3(Number(item.quantity)) !== 1);
+}
+
+function itemLineTotal(item) {
+  return round2((Number(item.price) || 0) * (Number(item.quantity) || 1));
+}
+
 function buildSettlementsFromStats(stats) {
   if (!stats?.users?.length) return [];
   const users = stats.users
@@ -241,7 +266,9 @@ export default function App() {
   const [showAliceDetails, setShowAliceDetails] = useState(false);
   const [priceEditId, setPriceEditId] = useState(null);
   const [priceEditValue, setPriceEditValue] = useState("");
-  const skipPriceSaveRef = useRef(false);
+  const [qtyEditValue, setQtyEditValue] = useState("1");
+  const [unitEditValue, setUnitEditValue] = useState("pcs");
+  const measureBlurTimerRef = useRef(null);
   const [touchHintVisible, setTouchHintVisible] = useState(() => {
     try {
       return !localStorage.getItem("shopping_touch_hint_seen");
@@ -290,6 +317,8 @@ export default function App() {
   const [editItemDialog, setEditItemDialog] = useState(null);
   const [editText, setEditText] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editUnit, setEditUnit] = useState("pcs");
   const [itemMenuId, setItemMenuId] = useState(null);
   const itemPressRef = useRef(null);
   const [listMenuId, setListMenuId] = useState(null);
@@ -517,15 +546,17 @@ export default function App() {
     }
   };
 
-  const handleUpdateItem = async (itemId, text, price) => {
+  const handleUpdateItem = async (itemId, text, price, quantity, unit) => {
     if (!selectedListId) return;
     const listId = selectedListId;
     await runOrQueue({
-      action: { type: "item.update", listId, itemId, text, price },
-      run: () => api.updateItem(token, itemId, text ?? null, price ?? null),
+      action: { type: "item.update", listId, itemId, text, price, quantity, unit },
+      run: () => api.updateItem(token, itemId, { text: text ?? null, price: price ?? null, quantity: quantity ?? null, unit: unit ?? null }),
       optimistic: () => {
         const next = items.map((it) =>
-          it.id === itemId ? { ...it, text: text ?? it.text, price } : it
+          it.id === itemId
+            ? { ...it, text: text ?? it.text, price, quantity: quantity ?? it.quantity, unit: unit ?? it.unit }
+            : it
         );
         applyLocalItems(listId, next);
       },
@@ -585,30 +616,51 @@ export default function App() {
 
   const openInlinePrice = (item) => {
     setPriceEditValue(item?.price != null ? String(item.price) : "");
-    skipPriceSaveRef.current = false;
+    setQtyEditValue(item?.quantity != null ? String(round3(Number(item.quantity))) : "1");
+    setUnitEditValue(item?.unit === "kg" ? "kg" : "pcs");
     setPriceEditId(item.id);
   };
 
-  const saveInlinePrice = (item) => {
-    if (skipPriceSaveRef.current) {
-      skipPriceSaveRef.current = false;
-      setPriceEditId(null);
+  const cancelMeasureSave = () => {
+    if (measureBlurTimerRef.current) {
+      clearTimeout(measureBlurTimerRef.current);
+      measureBlurTimerRef.current = null;
+    }
+  };
+
+  const closeMeasureEditor = () => {
+    cancelMeasureSave();
+    setPriceEditId(null);
+  };
+
+  const saveMeasure = (item) => {
+    cancelMeasureSave();
+    const quantity = parseQuantityInput(qtyEditValue);
+    const normalized = priceEditValue.replace(",", ".").trim();
+    const price = normalized ? Number(normalized) : null;
+    setPriceEditId(null);
+    if (quantity == null && unitEditValue === (item.unit === "kg" ? "kg" : "pcs") && price === item.price) {
       return;
     }
-    const normalized = priceEditValue.replace(",", ".").trim();
-    const parsed = normalized ? Number(normalized) : null;
-    setPriceEditId(null);
-    if (parsed !== null && !Number.isNaN(parsed) && parsed !== item.price) {
-      handleUpdateItem(item.id, null, parsed).catch((e) =>
-        showToast(e.message || "Не удалось обновить стоимость")
-      );
-    }
+    handleUpdateItem(item.id, null, price, quantity, unitEditValue).catch((e) =>
+      showToast(e.message || "Не удалось обновить покупку")
+    );
+  };
+
+  const scheduleMeasureSave = (item) => {
+    cancelMeasureSave();
+    measureBlurTimerRef.current = setTimeout(() => {
+      measureBlurTimerRef.current = null;
+      saveMeasure(item);
+    }, 150);
   };
 
   const openEditItemDialog = (item) => {
     setEditItemDialog(item);
     setEditText(item?.text || "");
     setEditPrice(item?.price != null ? String(item.price) : "");
+    setEditQuantity(item?.quantity != null ? String(round3(Number(item.quantity))) : "");
+    setEditUnit(item?.unit === "kg" ? "kg" : "pcs");
   };
 
   const closeItemMenu = () => setItemMenuId(null);
@@ -1843,48 +1895,112 @@ export default function App() {
                               <div className="item-title-row">
                                 <div className="item-title">{item.text}</div>
                                 {priceEditId === item.id ? (
-                                  <input
-                                    className="input price-inline-input"
-                                    autoFocus
-                                    inputMode="decimal"
-                                    placeholder="Цена, ₽"
-                                    value={priceEditValue}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => setPriceEditValue(e.target.value)}
-                                    onBlur={() => saveInlinePrice(item)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        saveInlinePrice(item);
-                                      }
-                                      if (e.key === "Escape") {
-                                        skipPriceSaveRef.current = true;
-                                        setPriceEditId(null);
-                                      }
-                                    }}
-                                  />
-                                ) : item.price != null ? (
-                                  <span
-                                    className="price-chip"
-                                    title="Изменить цену"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openInlinePrice(item);
-                                    }}
-                                  >
-                                    {formatPrice(item.price)} ₽
-                                  </span>
+                                  <div className="measure-editor" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                      className="input price-inline-input qty-input"
+                                      autoFocus
+                                      inputMode="decimal"
+                                      placeholder="кол-во"
+                                      value={qtyEditValue}
+                                      onChange={(e) => setQtyEditValue(e.target.value)}
+                                      onFocus={cancelMeasureSave}
+                                      onBlur={() => scheduleMeasureSave(item)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          saveMeasure(item);
+                                        }
+                                        if (e.key === "Escape") {
+                                          closeMeasureEditor();
+                                        }
+                                      }}
+                                    />
+                                    <div className="unit-toggle">
+                                      <button
+                                        type="button"
+                                        className={`unit-option ${unitEditValue === "pcs" ? "active" : ""}`}
+                                        onClick={() => setUnitEditValue("pcs")}
+                                      >
+                                        шт
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={`unit-option ${unitEditValue === "kg" ? "active" : ""}`}
+                                        onClick={() => setUnitEditValue("kg")}
+                                      >
+                                        кг
+                                      </button>
+                                    </div>
+                                    <input
+                                      className="input price-inline-input"
+                                      inputMode="decimal"
+                                      placeholder="цена, ₽"
+                                      value={priceEditValue}
+                                      onChange={(e) => setPriceEditValue(e.target.value)}
+                                      onFocus={cancelMeasureSave}
+                                      onBlur={() => scheduleMeasureSave(item)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          saveMeasure(item);
+                                        }
+                                        if (e.key === "Escape") {
+                                          closeMeasureEditor();
+                                        }
+                                      }}
+                                    />
+                                  </div>
                                 ) : (
-                                  <span
-                                    className="chip chip-muted-action"
-                                    title="Указать цену"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openInlinePrice(item);
-                                    }}
-                                  >
-                                    Указать цену
-                                  </span>
+                                  <>
+                                    {item.price != null ? (
+                                      <span
+                                        className="price-chip"
+                                        title="Изменить количество и цену"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openInlinePrice(item);
+                                        }}
+                                      >
+                                        {formatPrice(item.price)} ₽{item.unit === "kg" ? "/кг" : ""}
+                                      </span>
+                                    ) : null}
+                                    {hasCustomQuantity(item) ? (
+                                      <span
+                                        className="chip"
+                                        title="Изменить количество"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openInlinePrice(item);
+                                        }}
+                                      >
+                                        {formatQuantity(item.quantity)} {item.unit === "kg" ? "кг" : "шт"}
+                                      </span>
+                                    ) : null}
+                                    {item.price != null && hasCustomQuantity(item) ? (
+                                      <span
+                                        className="price-chip"
+                                        title="Итог позиции"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openInlinePrice(item);
+                                        }}
+                                      >
+                                        = {formatPrice(itemLineTotal(item))} ₽
+                                      </span>
+                                    ) : null}
+                                    {item.price == null ? (
+                                      <span
+                                        className="chip chip-muted-action"
+                                        title="Указать количество и цену"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openInlinePrice(item);
+                                        }}
+                                      >
+                                        Указать цену
+                                      </span>
+                                    ) : null}
+                                  </>
                                 )}
                               </div>
                               <div className="item-meta item-created muted">Создан: {formatDate(item.createdAt)}</div>
@@ -1957,7 +2073,7 @@ export default function App() {
                     {items.length ? (
                       <>
                         <div className="total sticky-total">
-                          Итого: {items.reduce((sum, item) => sum + (item.price || 0), 0).toFixed(2)} ₽
+                          Итого: {items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0).toFixed(2)} ₽
                         </div>
                         {purchaseStats?.users?.length ? (
                           <div className="card card-soft" style={{ marginTop: 12 }}>
@@ -1974,7 +2090,7 @@ export default function App() {
                                     </div>
                                     {user.items?.length ? (
                                       <div className="muted" style={{ marginTop: 4 }}>
-                                        {user.items.slice(0, 3).map((entry) => `${entry.text} (${Number(entry.price || 0).toFixed(2)} ₽)`).join(", ")}
+                                        {user.items.slice(0, 3).map((entry) => `${entry.text} (${Number(entry.totalPrice ?? entry.price ?? 0).toFixed(2)} ₽)`).join(", ")}
                                         {user.items.length > 3 ? ` и ещё ${user.items.length - 3}` : ""}
                                       </div>
                                     ) : null}
@@ -2208,7 +2324,7 @@ export default function App() {
               <p className="muted">{priceDialogItem.text}</p>
               <input
                 className="input"
-                placeholder="Цена (₽)"
+                placeholder="Цена за единицу, ₽"
                 value={priceInput}
                 onChange={(e) => setPriceInput(e.target.value)}
               />
@@ -2259,24 +2375,46 @@ export default function App() {
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
               />
-              <input
-                className="input"
-                style={{ marginTop: 8 }}
-                placeholder="Цена (₽)"
-                value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
-              />
+              <div className="row" style={{ marginTop: 8 }}>
+                <input
+                  className="input"
+                  placeholder="Кол-во"
+                  inputMode="decimal"
+                  value={editQuantity}
+                  onChange={(e) => setEditQuantity(e.target.value)}
+                />
+                <select
+                  className="input"
+                  style={{ flex: "none", width: 90 }}
+                  value={editUnit}
+                  onChange={(e) => setEditUnit(e.target.value)}
+                  aria-label="Единица измерения"
+                >
+                  <option value="pcs">шт</option>
+                  <option value="kg">кг</option>
+                </select>
+                <input
+                  className="input"
+                  placeholder="Цена за единицу, ₽"
+                  inputMode="decimal"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                />
+              </div>
               <div className="row" style={{ marginTop: 16 }}>
                 <button
                   className="btn"
                   onClick={async () => {
                     const normalized = editPrice.replace(",", ".").trim();
                     const parsed = normalized ? Number(normalized) : null;
+                    const parsedQty = parseQuantityInput(editQuantity);
                     try {
                       await handleUpdateItem(
                         editItemDialog.id,
                         editText.trim(),
-                        Number.isFinite(parsed) ? parsed : null
+                        Number.isFinite(parsed) ? parsed : null,
+                        parsedQty,
+                        editUnit
                       );
                       setEditItemDialog(null);
                     } catch (e) {

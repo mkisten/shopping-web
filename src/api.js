@@ -62,11 +62,11 @@ export const api = {
   getList: (token, listId) => request(`/lists/${listId}`, { token }),
   updateList: (token, listId, payload) => request(`/lists/${listId}`, { method: "PUT", token, body: payload }),
   deleteList: (token, listId) => request(`/lists/${listId}`, { method: "DELETE", token }),
-  createItem: (token, listId, text, price) =>
-    request(`/lists/${listId}/items`, { method: "POST", token, body: { text, price } }),
+  createItem: (token, listId, text, price, quantity, unit) =>
+    request(`/lists/${listId}/items`, { method: "POST", token, body: { text, price, quantity, unit } }),
   listItems: (token, listId) => request(`/lists/${listId}/items`, { token }),
   getListPurchaseStats: (token, listId) => request(`/lists/${listId}/purchase-stats`, { token }),
-  updateItem: (token, itemId, text, price) => request(`/items/${itemId}`, { method: "PUT", token, body: { text, price } }),
+  updateItem: (token, itemId, payload) => request(`/items/${itemId}`, { method: "PUT", token, body: payload }),
   checkItem: (token, itemId, checked) =>
     request(`/items/${itemId}/check`, { method: "POST", token, body: { checked } }),
   deleteItem: (token, itemId) => request(`/items/${itemId}`, { method: "DELETE", token }),

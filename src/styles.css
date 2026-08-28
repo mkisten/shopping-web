@@ -353,9 +353,46 @@ textarea {
 }
 
 .price-inline-input {
-  max-width: 140px;
+  max-width: 110px;
   padding: 6px 10px;
   font-size: 14px;
+}
+
+.qty-input {
+  max-width: 76px;
+}
+
+.measure-editor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--accent);
+  background: var(--surface-2);
+}
+
+.unit-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.unit-option {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.unit-option.active {
+  background: var(--accent-soft-bg);
+  color: var(--accent-soft-text);
+  font-weight: 600;
 }
 
 .danger-text {
