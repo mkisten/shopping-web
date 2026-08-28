@@ -78,6 +78,15 @@ function buildTelegramSchemeLink(authLink) {
   }
 }
 
+function pluralMembers(count) {
+  const n = Number(count) || 0;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${n} участник`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} участника`;
+  return `${n} участников`;
+}
+
 function formatDate(value) {
   if (!value) return "";
   try {
@@ -169,6 +178,10 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const pollingRef = useRef(null);
+  const [confirmState, setConfirmState] = useState(null);
+  const [renameDialog, setRenameDialog] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [showAliceDetails, setShowAliceDetails] = useState(false);
 
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
@@ -1105,17 +1118,42 @@ export default function App() {
     return () => window.removeEventListener("shopping-auth-expired", onAuthExpired);
   }, []);
 
+  useEffect(() => {
+    if (itemMenuId == null && listMenuId == null) return undefined;
+    const closeMenus = () => {
+      setItemMenuId(null);
+      setListMenuId(null);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") closeMenus();
+    };
+    document.addEventListener("click", closeMenus);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("click", closeMenus);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [itemMenuId, listMenuId]);
+
+  const openConfirm = (title, message, onConfirm, confirmLabel = "Удалить") =>
+    setConfirmState({ title, message, onConfirm, confirmLabel });
+
   const handleDeleteGroup = async () => {
     if (!groupDetail) return;
-    if (!window.confirm("Удалить группу для всех участников?")) return;
-    try {
-      await api.deleteGroup(token, groupDetail.id);
-      setGroupDetail(null);
-      setSelectedGroupId(null);
-      await loadGroups();
-    } catch (e) {
-      showToast(e.message || "Не удалось удалить группу");
-    }
+    openConfirm(
+      "Удалить группу?",
+      "Группа, её списки и покупки будут удалены для всех участников. Действие необратимо.",
+      async () => {
+        try {
+          await api.deleteGroup(token, groupDetail.id);
+          setGroupDetail(null);
+          setSelectedGroupId(null);
+          await loadGroups();
+        } catch (e) {
+          showToast(e.message || "Не удалось удалить группу");
+        }
+      }
+    );
   };
 
   const handleCreateAliceCode = async () => {
@@ -1141,11 +1179,11 @@ export default function App() {
             <div className="badge">Умные покупки</div>
             <h1 className="landing-title">Один список для семьи, веба, Telegram и Алисы</h1>
             <p className="landing-lead">
-              Веди общие покупки в реальном времени: добавляй товары, отмечай выполненное, фиксируй цены,
-              смотри сводку трат и взаиморасчеты по участникам.
+              Ведите общие покупки в реальном времени: добавляйте товары, отмечайте выполненное, фиксируйте цены,
+              смотрите сводку трат и взаиморасчеты по участникам.
             </p>
             <div className="row" style={{ marginTop: 12, marginBottom: 8 }}>
-              <a className="btn" href={ANDROID_APP_URL} target="_blank" rel="noreferrer">
+              <a className="btn btn-secondary" href={ANDROID_APP_URL} target="_blank" rel="noreferrer">
                 Скачать приложение для Android
               </a>
             </div>
@@ -1173,14 +1211,19 @@ export default function App() {
               <div className="alice-setup">
                 <h3>Как подключить</h3>
                 <ol className="alice-steps">
-                  <li>Скажи: «Алиса, запусти навык Умные покупки».</li>
-                  <li>В вебе или приложении создай код привязки Алисы, нажав на кнопку Алиса и получив там код привязки.</li>
-                  <li>В навыке скажи: «привязать 1234» (вместо 1234 назови свой код).</li>
+                  <li>Скажите: «Алиса, запусти навык Умные покупки».</li>
+                  <li>В вебе или приложении создайте код привязки Алисы, нажав на кнопку Алиса и получив там код привязки.</li>
+                  <li>В навыке скажите: «привязать 1234» (вместо 1234 назовите свой код).</li>
                 </ol>
               </div>
-              <div className="alice-setup">
-                <h3>Полные команды и примеры</h3>
-                <ul className="alice-flow">
+              <div className="archive-toggle accordion" onClick={() => setShowAliceDetails((prev) => !prev)}>
+                <span>Полные команды и примеры</span>
+                <span>{showAliceDetails ? "▲" : "▼"}</span>
+              </div>
+              {showAliceDetails ? (
+                <>
+                  <div className="alice-setup">
+                    <ul className="alice-flow">
                   <li>
                     <strong>1) Открыть группы:</strong> скажи <code>группы</code>, затем выбери:
                     <code>группа 1</code> или <code>группа Семья</code>.
@@ -1212,22 +1255,29 @@ export default function App() {
                     <strong>9) Подсказка по возможностям:</strong> <code>что ты умеешь</code>.
                   </li>
                 </ul>
-              </div>
-              <div className="alice-commands">
-                {ALICE_COMMANDS.map((command) => (
-                  <span key={command} className="alice-command-chip">
-                    {command}
-                  </span>
-                ))}
-              </div>
+                  </div>
+                  <div className="alice-commands">
+                    {ALICE_COMMANDS.map((command) => (
+                      <span key={command} className="alice-command-chip">
+                        {command}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
           </section>
           <div className="login-card">
-            <div className="badge">Умные покупки</div>
             <h1>Умные покупки</h1>
-            <p>Войди через Telegram, чтобы создавать группы, списки и покупать вместе.</p>
+            <p>Войдите через Telegram, чтобы создавать группы, списки и покупать вместе.</p>
             <div className="row">
               <button className="btn" onClick={handleLogin} disabled={authLoading}>
+                <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" style={{ marginRight: 8 }}>
+                  <path
+                    d="M21.9 4.6c.3-1.3-.9-2.4-2.1-1.9L2.7 9.6c-1.3.5-1.2 2.3.1 2.7l4.4 1.4 1.7 5.4c.4 1.2 1.9 1.5 2.7.5l2.4-2.9 4.5 3.3c1 .8 2.5.2 2.8-1.1l2.6-14.3z"
+                    fill="currentColor"
+                  />
+                </svg>
                 {authLoading ? "Создаём сессию..." : "Войти через Telegram"}
               </button>
             </div>
@@ -1294,7 +1344,7 @@ export default function App() {
                   onClick={() => setSelectedGroupId(group.id)}
                 >
                   <h4>{group.name}</h4>
-                  <div className="group-meta">{group.membersCount} участник(ов)</div>
+                  <div className="group-meta">{pluralMembers(group.membersCount)}</div>
                 </div>
               ))}
               {!groups.length ? (
@@ -1318,7 +1368,7 @@ export default function App() {
           <span>{pullDistance > 60 ? "Отпустите, чтобы обновить" : "Потяните вниз для обновления"}</span>
         </div>
         <div className="topbar">
-          <h1>{groupDetail?.name || "Выбери группу"}</h1>
+          <h1>{groupDetail?.name || "Выберите группу"}</h1>
           <div className="row">
             <span
               className={`sync-dot ${!isOnline ? "offline" : isSyncing || refreshing || pendingCount ? "syncing active" : "ok"}`}
@@ -1332,10 +1382,19 @@ export default function App() {
                   : "Синхронизировано"
               }
             />
+            <span className="sync-label">
+              {!isOnline
+                ? "Оффлайн"
+                : isSyncing || refreshing
+                ? "Синхронизация…"
+                : pendingCount
+                ? `Не отправлено: ${pendingCount}`
+                : "Сохранено"}
+            </span>
             {!isOnline ? <span className="pill pill-muted">Оффлайн</span> : null}
-            {groupDetail ? <span className="pill">{groupDetail.members.length} участников</span> : null}
+            {groupDetail ? <span className="pill">{pluralMembers(groupDetail.members.length)}</span> : null}
             {groupDetail && isAdmin ? (
-              <button className="btn btn-secondary" onClick={handleDeleteGroup}>
+              <button className="btn btn-ghost" onClick={handleDeleteGroup}>
                 Удалить группу
               </button>
             ) : null}
@@ -1369,7 +1428,7 @@ export default function App() {
                   onClick={() => setSelectedGroupId(group.id)}
                 >
                   <h4>{group.name}</h4>
-                  <div className="group-meta">{group.membersCount} участник(ов)</div>
+                  <div className="group-meta">{pluralMembers(group.membersCount)}</div>
                 </div>
               ))}
               {!groups.length ? (
@@ -1383,7 +1442,7 @@ export default function App() {
         </div>
 
         {!groupDetail ? (
-          <div className="card empty">Выбери группу слева или создай новую.</div>
+          <div className="card empty">Выберите группу, чтобы увидеть её списки и покупки.</div>
         ) : (
           <div className="grid">
             <div className="split">
@@ -1449,6 +1508,8 @@ export default function App() {
                             <button
                               className="icon-btn"
                               title="Действия"
+                              aria-label="Действия"
+                              aria-expanded={listMenuId === list.id}
                               onClick={() => setListMenuId(listMenuId === list.id ? null : list.id)}
                             >
                               ⋯
@@ -1466,10 +1527,8 @@ export default function App() {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     closeListMenu();
-                                    const nextName = window.prompt("Новое название списка", list.name);
-                                    if (nextName && nextName.trim()) {
-                                      handleRenameList(list, nextName);
-                                    }
+                                    setRenameValue(list.name);
+                                    setRenameDialog({ list });
                                   }}
                                 >
                                   Переименовать
@@ -1491,9 +1550,11 @@ export default function App() {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     closeListMenu();
-                                    if (window.confirm("Удалить список для всех участников?")) {
-                                      handleDeleteList(list);
-                                    }
+                                    openConfirm(
+                                      "Удалить список?",
+                                      `Список «${list.name}» будет удалён для всех участников вместе с покупками.`,
+                                      () => handleDeleteList(list)
+                                    );
                                   }}
                                 >
                                   Удалить
@@ -1505,7 +1566,7 @@ export default function App() {
                       </div>
                     ))
                     ) : (
-                      <div className="empty">Списков пока нет. Создайте новый ниже.</div>
+                      <div className="empty">Списков пока нет. Создайте первый в строке выше.</div>
                     )}
                   </div>
                   <div className="archive-toggle accordion" onClick={() => setShowArchive((prev) => !prev)}>
@@ -1557,6 +1618,8 @@ export default function App() {
                                 <button
                                   className="icon-btn"
                                   title="Действия"
+                                  aria-label="Действия"
+                                  aria-expanded={listMenuId === list.id}
                                   onClick={() => setListMenuId(listMenuId === list.id ? null : list.id)}
                                 >
                                   ⋯
@@ -1572,10 +1635,8 @@ export default function App() {
                                         className="menu-item"
                                         onClick={() => {
                                         closeListMenu();
-                                        const nextName = window.prompt("Новое название списка", list.name);
-                                        if (nextName && nextName.trim()) {
-                                          handleRenameList(list, nextName);
-                                        }
+                                        setRenameValue(list.name);
+                                        setRenameDialog({ list });
                                       }}
                                     >
                                       Переименовать
@@ -1597,10 +1658,12 @@ export default function App() {
                                           e.preventDefault();
                                           e.stopPropagation();
                                           closeListMenu();
-                                          if (window.confirm("Удалить список?")) {
-                                          handleDeleteList(list);
-                                        }
-                                      }}
+                                          openConfirm(
+                                            "Удалить список?",
+                                            `Архивный список «${list.name}» будет удалён вместе с покупками.`,
+                                            () => handleDeleteList(list)
+                                          );
+                                        }}
                                     >
                                       Удалить
                                     </button>
@@ -1661,13 +1724,8 @@ export default function App() {
                               <input
                                 type="checkbox"
                                 checked={item.checked}
-                                onChange={() => {
-                                  if (!item.checked) {
-                                    openPriceDialog(item, true);
-                                  } else {
-                                    handleToggleItem(item, false);
-                                  }
-                                }}
+                                onChange={() => handleToggleItem(item, !item.checked)}
+                                aria-label={item.checked ? `Снять отметку: ${item.text}` : `Отметить купленным: ${item.text}`}
                               />
                             </label>
                             <div
@@ -1678,16 +1736,18 @@ export default function App() {
                                   longPressRef.current = false;
                                   return;
                                 }
-                                if (item.checked) openPriceDialog(item, false);
+                                openPriceDialog(item, false);
                               }}
                             >
                               <div className="item-title-row">
                                 <div className="item-title">{item.text}</div>
                                 {item.price != null ? (
                                   <span className="price-chip">{formatPrice(item.price)} ₽</span>
-                                ) : null}
+                                ) : (
+                                  <span className="chip chip-muted-action">Указать цену</span>
+                                )}
                               </div>
-                              <div className="item-meta muted">Создан: {formatDate(item.createdAt)}</div>
+                              <div className="item-meta item-created muted">Создан: {formatDate(item.createdAt)}</div>
                               {item.checked && item.checkedByDisplay ? (
                                 <div className="item-meta muted">
                                   Отметил: {item.checkedByDisplay}
@@ -1699,6 +1759,8 @@ export default function App() {
                               <button
                                 className="icon-btn"
                                 title="Действия"
+                                aria-label="Действия"
+                                aria-expanded={itemMenuId === item.id}
                                 onClick={() => setItemMenuId(itemMenuId === item.id ? null : item.id)}
                               >
                                 ⋯
@@ -1736,9 +1798,9 @@ export default function App() {
                                       e.preventDefault();
                                       e.stopPropagation();
                                       closeItemMenu();
-                                      if (window.confirm("Удалить покупку?")) {
-                                        handleDeleteItem(item.id);
-                                      }
+                                      openConfirm("Удалить покупку?", `«${item.text}» будет удалена из списка.`, () =>
+                                        handleDeleteItem(item.id)
+                                      );
                                     }}
                                   >
                                     Удалить
@@ -1808,7 +1870,7 @@ export default function App() {
                     ) : null}
                   </>
                 ) : (
-                  <div className="empty">Выбери список покупок слева.</div>
+                  <div className="empty">Выберите список, чтобы увидеть покупки.</div>
                 )}
               </div>
             </div>
@@ -1850,7 +1912,14 @@ export default function App() {
                             ) : null}
                             <button
                               className="btn btn-secondary"
-                              onClick={() => removeMember(token, groupDetail.id, member.id, setGroupDetail, showToast)}
+                              onClick={() =>
+                                openConfirm(
+                                  "Удалить участника?",
+                                  `${member.login || member.telegramUsername || `User #${member.userId}`} потеряет доступ к группе.`,
+                                  () =>
+                                    removeMember(token, groupDetail.id, member.id, setGroupDetail, showToast)
+                                )
+                              }
                             >
                               Удалить
                             </button>
@@ -1879,6 +1948,67 @@ export default function App() {
           </div>
         )}
         {toast ? <div className={`toast ${toast.type === "success" ? "success" : ""}`}>{toast.message}</div> : null}
+        {confirmState ? (
+          <div className="modal-backdrop" onClick={() => setConfirmState(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+              <h3>{confirmState.title}</h3>
+              <p className="muted">{confirmState.message}</p>
+              <div className="row" style={{ marginTop: 16 }}>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => {
+                    const action = confirmState.onConfirm;
+                    setConfirmState(null);
+                    action();
+                  }}
+                >
+                  {confirmState.confirmLabel}
+                </button>
+                <button className="btn btn-secondary" onClick={() => setConfirmState(null)}>
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {renameDialog ? (
+          <div className="modal-backdrop" onClick={() => setRenameDialog(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+              <h3>Переименовать список</h3>
+              <input
+                className="input"
+                value={renameValue}
+                autoFocus
+                onChange={(e) => setRenameValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && renameValue.trim()) {
+                    const target = renameDialog.list;
+                    const nextName = renameValue.trim();
+                    setRenameDialog(null);
+                    handleRenameList(target, nextName);
+                  }
+                }}
+              />
+              <div className="row" style={{ marginTop: 16 }}>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    if (!renameValue.trim()) return;
+                    const target = renameDialog.list;
+                    const nextName = renameValue.trim();
+                    setRenameDialog(null);
+                    handleRenameList(target, nextName);
+                  }}
+                >
+                  Сохранить
+                </button>
+                <button className="btn btn-secondary" onClick={() => setRenameDialog(null)}>
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         {inviteDialog ? (
           <div className="modal-backdrop" onClick={() => setInviteDialog(null)}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -2064,15 +2194,15 @@ function GroupCreateForm({ token, onCreated }) {
   };
 
   return (
-    <div className="card card-soft">
+    <form className="card card-soft" onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <h3 className="card-title">Новая группа</h3>
       <div className="row">
         <input className="input" placeholder="Название группы" value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn" onClick={submit} disabled={loading}>
+        <button className="btn" type="submit" disabled={loading}>
           Создать
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 
@@ -2092,12 +2222,12 @@ function ListCreateForm({ onCreate }) {
   };
 
   return (
-    <div className="row">
+    <form className="row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <input className="input" placeholder="Новый список" value={name} onChange={(e) => setName(e.target.value)} />
-      <button className="btn" onClick={submit} disabled={loading}>
+      <button className="btn" type="submit" disabled={loading}>
         Добавить
       </button>
-    </div>
+    </form>
   );
 }
 
@@ -2117,7 +2247,7 @@ function ItemCreateForm({ onCreate, placeholder }) {
   };
 
   return (
-    <div>
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <div className="row">
         <input
           className="input"
@@ -2126,10 +2256,10 @@ function ItemCreateForm({ onCreate, placeholder }) {
           onChange={(e) => setText(e.target.value)}
         />
       </div>
-      <button className="btn" style={{ marginTop: 12 }} onClick={submit} disabled={loading}>
+      <button className="btn" type="submit" style={{ marginTop: 12 }} disabled={loading}>
         Добавить
       </button>
-    </div>
+    </form>
   );
 }
 
@@ -2162,15 +2292,15 @@ function AddMemberForm({ token, groupId, onMemberAdded, onInviteCreated }) {
   };
 
   return (
-    <>
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <div className="row">
         <input className="input" placeholder="Логин" value={login} onChange={(e) => setLogin(e.target.value)} />
         <input className="input" placeholder="Telegram username" value={telegramUsername} onChange={(e) => setTelegramUsername(e.target.value)} />
       </div>
-      <button className="btn" style={{ marginTop: 12 }} onClick={submit} disabled={loading}>
+      <button className="btn" type="submit" style={{ marginTop: 12 }} disabled={loading}>
         Добавить участника
       </button>
-    </>
+    </form>
   );
 }
 
@@ -2189,7 +2319,7 @@ function InviteCreateForm({ token, groupId, onInvite }) {
   };
 
   return (
-    <>
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <div className="row">
         <input
           className="input"
@@ -2197,11 +2327,11 @@ function InviteCreateForm({ token, groupId, onInvite }) {
           value={expiresInHours}
           onChange={(e) => setExpiresInHours(e.target.value)}
         />
-        <button className="btn" onClick={submit} disabled={loading}>
+        <button className="btn" type="submit" disabled={loading}>
           Создать ссылку
         </button>
       </div>
-    </>
+    </form>
   );
 }
 
