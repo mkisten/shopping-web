@@ -168,6 +168,63 @@ function setLastListId(groupId, listId) {
   localStorage.setItem(lastListKey(groupId), String(listId));
 }
 
+const EMPTY_ICONS = {
+  people: (
+    <>
+      <circle cx="24" cy="20" r="7" />
+      <path d="M12 46c0-7 5-12 12-12s12 5 12 12" />
+      <circle cx="44" cy="22" r="5" />
+      <path d="M40 46c0-6 3-10 8-10 4 0 7 3 8 7" />
+    </>
+  ),
+  clipboard: (
+    <>
+      <rect x="16" y="10" width="32" height="44" rx="4" />
+      <rect x="26" y="6" width="12" height="8" rx="2" />
+      <path d="M24 26h16M24 34h16M24 42h10" />
+    </>
+  ),
+  cart: (
+    <>
+      <circle cx="24" cy="50" r="4" />
+      <circle cx="46" cy="50" r="4" />
+      <path d="M8 10h8l6 28h28l6-20H18" />
+    </>
+  ),
+  box: (
+    <>
+      <rect x="12" y="20" width="40" height="32" rx="4" />
+      <path d="M8 12h48v8H8zM28 32h8" />
+    </>
+  ),
+  person: (
+    <>
+      <circle cx="32" cy="20" r="9" />
+      <path d="M14 52c0-10 8-16 18-16s18 6 18 16" />
+    </>
+  )
+};
+
+function EmptyState({ icon, title }) {
+  return (
+    <div className="empty empty-illustrated">
+      <svg
+        className="empty-icon"
+        viewBox="0 0 64 64"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {EMPTY_ICONS[icon] || EMPTY_ICONS.clipboard}
+      </svg>
+      <div>{title}</div>
+    </div>
+  );
+}
+
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [deviceId] = useState(getOrCreateDeviceId);
@@ -185,6 +242,22 @@ export default function App() {
   const [priceEditId, setPriceEditId] = useState(null);
   const [priceEditValue, setPriceEditValue] = useState("");
   const skipPriceSaveRef = useRef(false);
+  const [touchHintVisible, setTouchHintVisible] = useState(() => {
+    try {
+      return !localStorage.getItem("shopping_touch_hint_seen");
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const dismissTouchHint = () => {
+    try {
+      localStorage.setItem("shopping_touch_hint_seen", "1");
+    } catch (e) {
+      // localStorage недоступен — просто скрываем до перезагрузки
+    }
+    setTouchHintVisible(false);
+  };
 
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
@@ -1373,7 +1446,7 @@ export default function App() {
                 </div>
               ))}
               {!groups.length ? (
-                <div className="empty">Пока нет групп. Создайте первую — вместе проще покупать.</div>
+                <EmptyState icon="people" title="Пока нет групп. Создайте первую — вместе проще покупать." />
               ) : null}
             </div>
           )}
@@ -1392,6 +1465,14 @@ export default function App() {
         <div className={`pull-indicator ${pullDistance > 0 ? "active" : ""}`} style={{ height: pullDistance }}>
           <span>{pullDistance > 60 ? "Отпустите, чтобы обновить" : "Потяните вниз для обновления"}</span>
         </div>
+        {isMobile && touchHintVisible ? (
+          <div className="hint-bar" role="note">
+            <span>Подсказка: удерживайте список или покупку — откроется меню действий.</span>
+            <button className="hint-close" onClick={dismissTouchHint} aria-label="Скрыть подсказку">
+              ×
+            </button>
+          </div>
+        ) : null}
         <div className="topbar">
           <h1>{groupDetail?.name || "Выберите группу"}</h1>
           <div className="row">
@@ -1452,7 +1533,7 @@ export default function App() {
                 </div>
               ))}
               {!groups.length ? (
-                <div className="empty">Пока нет групп. Создайте первую — вместе проще покупать.</div>
+                <EmptyState icon="people" title="Пока нет групп. Создайте первую — вместе проще покупать." />
               ) : null}
             </div>
           )}
@@ -1462,7 +1543,7 @@ export default function App() {
         </div>
 
         {!groupDetail ? (
-          <div className="card empty">Выберите группу, чтобы увидеть её списки и покупки.</div>
+          <div className="card"><EmptyState icon="people" title="Выберите группу, чтобы увидеть её списки и покупки." /></div>
         ) : (
           <div className="grid">
             <div className="split">
@@ -1586,7 +1667,7 @@ export default function App() {
                       </div>
                     ))
                     ) : (
-                      <div className="empty">Списков пока нет. Создайте первый в строке выше.</div>
+                      <EmptyState icon="clipboard" title="Списков пока нет. Создайте первый в строке выше." />
                     )}
                   </div>
                   <div className="archive-toggle accordion" onClick={() => setShowArchive((prev) => !prev)}>
@@ -1694,7 +1775,7 @@ export default function App() {
                           </div>
                         ))
                     ) : (
-                      <div className="empty">Архив пуст. Тут будут завершенные списки.</div>
+                      <EmptyState icon="box" title="Архив пуст. Тут будут завершённые списки." />
                     )}
                   </div>
                 ) : null}
@@ -1870,7 +1951,7 @@ export default function App() {
                           </div>
                         ))
                       ) : (
-                        <div className="empty">Покупок пока нет. Добавьте первую строкой выше.</div>
+                        <EmptyState icon="cart" title="Покупок пока нет. Добавьте первую строкой выше." />
                       )}
                     </div>
                     {items.length ? (
@@ -1929,7 +2010,7 @@ export default function App() {
                     ) : null}
                   </>
                 ) : (
-                  <div className="empty">Выберите список, чтобы увидеть покупки.</div>
+                  <EmptyState icon="clipboard" title="Выберите список, чтобы увидеть покупки." />
                 )}
               </div>
             </div>
@@ -1993,7 +2074,7 @@ export default function App() {
                         </div>
                       ))
                     ) : (
-                      <div className="empty">Пока нет участников</div>
+                      <EmptyState icon="person" title="Пока нет участников" />
                     )}
                   </div>
                 ) : null}

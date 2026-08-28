@@ -363,6 +363,43 @@ textarea {
   border-color: rgba(239, 71, 111, 0.4);
 }
 
+.empty-illustrated {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 26px 18px;
+}
+
+.empty-icon {
+  width: 46px;
+  height: 46px;
+  opacity: 0.55;
+}
+
+.hint-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(78, 168, 222, 0.35);
+  background: var(--chip-blue-bg);
+  color: var(--chip-blue-text);
+  font-size: 13px;
+}
+
+.hint-close {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
 .btn:disabled,
 .btn-secondary:disabled {
   opacity: 0.6;
