@@ -1,4 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://shopping.subscriptionhhapp.ru/api").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://shopping.vsedela.pro/api").replace(/\/$/, "");
 
 async function request(path, { method = "GET", token, body } = {}) {
   const headers = {

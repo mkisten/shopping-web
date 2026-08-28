@@ -14,16 +14,16 @@ npm run dev
 
 По умолчанию приложение использует backend:
 ```
-https://shopping.subscriptionhhapp.ru/api
+https://shopping.vsedela.pro/api
 ```
 
 Если нужен другой адрес:
 ```bash
-setx VITE_API_BASE_URL "https://shopping.subscriptionhhapp.ru/api"
+setx VITE_API_BASE_URL "https://shopping.vsedela.pro/api"
 ```
 или `.env` файл:
 ```
-VITE_API_BASE_URL=https://shopping.subscriptionhhapp.ru/api
+VITE_API_BASE_URL=https://shopping.vsedela.pro/api
 ```
 
 ## Авторизация
@@ -33,7 +33,7 @@ VITE_API_BASE_URL=https://shopping.subscriptionhhapp.ru/api
 
 ## Инвайты
 Поддерживаются ссылки вида:
-- `https://shopping.subscriptionhhapp.ru/invite/<token>`
+- `https://shopping.vsedela.pro/invite/<token>`
 - `?invite=<token>`
 
 После входа приглашение будет принято автоматически.

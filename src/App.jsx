@@ -4,7 +4,8 @@ import { getCache, setCache, clearCache } from "./cache.js";
 
 const TOKEN_KEY = "shopping_token";
 const DEVICE_KEY = "shopping_device_id";
-const ANDROID_APP_URL = "https://shop.subscriptionhhapp.ru/downloads/shopping_app.apk";
+const SESSION_KEY = "shopping_auth_session";
+const ANDROID_APP_URL = "https://shop.vsedela.pro/downloads/shopping_app.apk";
 const lastListKey = (groupId) => `shopping_last_list_${groupId}`;
 const ALICE_COMMANDS = [
   "Группы",
@@ -33,6 +34,26 @@ function getOrCreateDeviceId() {
   const generated = `web-${Date.now().toString(36)}`;
   localStorage.setItem(DEVICE_KEY, generated);
   return generated;
+}
+
+function loadPersistedAuthSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.sessionId ? parsed : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function persistAuthSession(sessionId, authLink) {
+  if (!sessionId) return;
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId, authLink }));
+}
+
+function clearAuthSession() {
+  localStorage.removeItem(SESSION_KEY);
 }
 
 function getInviteTokenFromLocation() {
@@ -143,8 +164,8 @@ export default function App() {
   const [deviceId] = useState(getOrCreateDeviceId);
   const inviteToken = useMemo(getInviteTokenFromLocation, []);
 
-  const [sessionId, setSessionId] = useState(null);
-  const [authLink, setAuthLink] = useState(null);
+  const [sessionId, setSessionId] = useState(() => loadPersistedAuthSession()?.sessionId || null);
+  const [authLink, setAuthLink] = useState(() => loadPersistedAuthSession()?.authLink || null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const pollingRef = useRef(null);
@@ -620,13 +641,30 @@ export default function App() {
       try {
         const status = await api.sessionStatus(currentSessionId, deviceId);
         if (status?.token) {
+          clearAuthSession();
           localStorage.setItem(TOKEN_KEY, status.token);
           setToken(status.token);
           setSessionId(null);
+          setAuthLink(null);
+          setAuthError("");
+          clearPolling();
+        } else if (status?.status === "EXPIRED") {
+          clearAuthSession();
+          setSessionId(null);
+          setAuthLink(null);
+          setAuthError("Сессия входа истекла. Нажмите «Войти через Telegram» ещё раз.");
           clearPolling();
         }
       } catch (e) {
-        setAuthError(e.message || "Ошибка статуса сессии");
+        if (e.status === 404) {
+          clearAuthSession();
+          setSessionId(null);
+          setAuthLink(null);
+          setAuthError("Сессия входа не найдена. Нажмите «Войти через Telegram» ещё раз.");
+          clearPolling();
+        } else {
+          setAuthError(e.message || "Ошибка статуса сессии");
+        }
       }
     };
     pollingRef.current = setInterval(poll, 2000);
@@ -640,6 +678,7 @@ export default function App() {
         const response = await api.createSession(deviceId);
         setSessionId(response.sessionId);
         setAuthLink(response.authLink);
+        persistAuthSession(response.sessionId, response.authLink);
         showToast("Сессия создана. Открой Telegram для входа.", "success");
       if (response.authLink) {
         const tgLink = buildTelegramSchemeLink(response.authLink);
