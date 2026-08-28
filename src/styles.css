@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap");
 
 :root {
   --bg: #0f1115;
@@ -9,12 +9,87 @@
   --accent-strong: #f9844a;
   --accent-cool: #4ea8de;
   --text: #f5f5f7;
-  --muted: #a9b0c2;
+  --muted: #b3bacc;
   --danger: #ef476f;
   --success: #43aa8b;
   --border: #2e3348;
   --shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
   --radius: 18px;
+  --page-glow: #222840;
+  --surface-2: #11141c;
+  --surface-3: #121622;
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-grad: linear-gradient(160deg, #171b27 0%, #131722 60%, #0e111a 100%);
+  --backdrop: rgba(8, 10, 15, 0.65);
+  --chip-blue-bg: rgba(78, 168, 222, 0.2);
+  --chip-blue-text: #c8ecff;
+  --chip-yellow-bg: rgba(249, 199, 79, 0.18);
+  --chip-yellow-text: #fce6a1;
+  --chip-green-bg: rgba(67, 170, 139, 0.18);
+  --chip-green-text: #c9ffe6;
+  --danger-soft-bg: rgba(239, 71, 111, 0.16);
+  --danger-soft-text: #ffd6e0;
+  --success-soft-bg: rgba(67, 170, 139, 0.2);
+  --success-soft-text: #d6ffe8;
+  --menu-danger-text: #ffb3c1;
+  --accent-soft-bg: rgba(249, 199, 79, 0.15);
+  --accent-soft-text: #f9c74f;
+  --alice-chip-bg: #131a29;
+  --alice-code-text: #d8f0ff;
+  --alice-block-bg: rgba(27, 32, 48, 0.72);
+  --alice-setup-bg: rgba(17, 22, 35, 0.7);
+  --archived-card: rgba(27, 31, 43, 0.6);
+  --link-box-bg: rgba(27, 31, 43, 0.6);
+  --shimmer-a: #1b2030;
+  --shimmer-b: #2a3045;
+  --landing-panel-grad: linear-gradient(160deg, rgba(22, 27, 42, 0.93) 0%, rgba(15, 18, 28, 0.95) 100%);
+  --login-card-grad: linear-gradient(160deg, #1d2234 0%, #12151f 100%);
+  --active-group-grad: linear-gradient(140deg, rgba(249, 199, 79, 0.16), rgba(34, 40, 64, 0.4));
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f6fb;
+    --bg-soft: #eef1f8;
+    --card: #ffffff;
+    --card-soft: #f6f8fd;
+    --accent: #e0a800;
+    --accent-strong: #e8722a;
+    --text: #1c2333;
+    --muted: #5a6377;
+    --border: #d9deeb;
+    --shadow: 0 18px 40px rgba(28, 35, 51, 0.12);
+    --page-glow: #dfe6f5;
+    --surface-2: #ffffff;
+    --surface-3: #f4f6fc;
+    --surface-hover: rgba(28, 35, 51, 0.06);
+    --sidebar-grad: linear-gradient(160deg, #ffffff 0%, #f7f9ff 60%, #eef2fb 100%);
+    --backdrop: rgba(28, 35, 51, 0.4);
+    --chip-blue-bg: rgba(78, 168, 222, 0.16);
+    --chip-blue-text: #1668a0;
+    --chip-yellow-bg: rgba(249, 199, 79, 0.3);
+    --chip-yellow-text: #7a5200;
+    --chip-green-bg: rgba(67, 170, 139, 0.16);
+    --chip-green-text: #17654f;
+    --danger-soft-bg: rgba(239, 71, 111, 0.12);
+    --danger-soft-text: #b3123f;
+    --success-soft-bg: rgba(67, 170, 139, 0.16);
+    --success-soft-text: #17654f;
+    --menu-danger-text: #c9184a;
+    --accent-soft-bg: rgba(249, 199, 79, 0.35);
+    --accent-soft-text: #7a5200;
+    --alice-chip-bg: #eef3fb;
+    --alice-code-text: #1668a0;
+    --alice-block-bg: #f4f6fc;
+    --alice-setup-bg: #eef3fb;
+    --archived-card: rgba(240, 243, 250, 0.9);
+    --link-box-bg: #f4f6fc;
+    --shimmer-a: #e8ecf6;
+    --shimmer-b: #f6f8fd;
+    --landing-panel-grad: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 246, 251, 0.97) 100%);
+    --login-card-grad: linear-gradient(160deg, #ffffff 0%, #f6f8fd 100%);
+    --active-group-grad: linear-gradient(140deg, rgba(249, 199, 79, 0.3), rgba(78, 168, 222, 0.12));
+  }
 }
 
 * {
@@ -24,7 +99,7 @@
 body {
   margin: 0;
   font-family: "Manrope", system-ui, sans-serif;
-  background: radial-gradient(circle at 20% 20%, #222840 0%, #0f1115 55%);
+  background: radial-gradient(circle at 20% 20%, var(--page-glow) 0%, var(--bg) 55%);
   color: var(--text);
   min-height: 100vh;
 }
@@ -49,12 +124,12 @@ textarea {
 
 .sidebar {
   padding: 28px 22px;
-  background: linear-gradient(160deg, #171b27 0%, #131722 60%, #0e111a 100%);
+  background: var(--sidebar-grad);
   border-right: 1px solid var(--border);
 }
 
 .brand {
-  font-family: "Playfair Display", serif;
+  font-weight: 700;
   font-size: 26px;
   letter-spacing: 0.5px;
   margin-bottom: 22px;
@@ -66,8 +141,8 @@ textarea {
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(249, 199, 79, 0.15);
-  color: var(--accent);
+  background: var(--accent-soft-bg);
+  color: var(--accent-soft-text);
   font-size: 12px;
 }
 
@@ -101,7 +176,7 @@ textarea {
 
 .group-card.active {
   border-color: var(--accent);
-  background: linear-gradient(140deg, rgba(249, 199, 79, 0.16), rgba(34, 40, 64, 0.4));
+  background: var(--active-group-grad);
 }
 
 .group-card.active::after {
@@ -224,7 +299,7 @@ textarea {
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: #11141c;
+  background: var(--surface-2);
   color: var(--text);
 }
 
@@ -271,9 +346,21 @@ textarea {
 }
 
 .chip-muted-action {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   color: var(--muted);
   border: 1px dashed var(--border);
+  cursor: pointer;
+}
+
+.price-inline-input {
+  max-width: 140px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.danger-text {
+  color: var(--danger);
+  border-color: rgba(239, 71, 111, 0.4);
 }
 
 .btn:disabled,
@@ -339,7 +426,7 @@ textarea {
   justify-content: space-between;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #121622;
+  background: var(--surface-3);
   border: 1px solid var(--border);
   gap: 12px;
   overflow: visible;
@@ -378,11 +465,11 @@ textarea {
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-hover);
 }
 
 .menu-item.danger {
-  color: #ffb3c1;
+  color: var(--menu-danger-text);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 12px;
 }
@@ -422,8 +509,8 @@ textarea {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: rgba(78, 168, 222, 0.2);
-  color: #c8ecff;
+  background: var(--chip-blue-bg);
+  color: var(--chip-blue-text);
   white-space: nowrap;
 }
 
@@ -433,8 +520,8 @@ textarea {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: rgba(249, 199, 79, 0.18);
-  color: #fce6a1;
+  background: var(--chip-yellow-bg);
+  color: var(--chip-yellow-text);
 }
 
 .list-item.active {
@@ -449,7 +536,7 @@ textarea {
 
 .list-card.archived {
   opacity: 0.8;
-  background: rgba(27, 31, 43, 0.6);
+  background: var(--archived-card);
 }
 
 .item-main {
@@ -487,8 +574,8 @@ textarea {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
-  background: rgba(67, 170, 139, 0.18);
-  color: #c9ffe6;
+  background: var(--chip-green-bg);
+  color: var(--chip-green-text);
   white-space: nowrap;
 }
 
@@ -616,14 +703,14 @@ textarea {
   margin-top: 12px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(239, 71, 111, 0.16);
-  color: #ffd6e0;
+  background: var(--danger-soft-bg);
+  color: var(--danger-soft-text);
   font-size: 13px;
 }
 
 .success {
-  background: rgba(67, 170, 139, 0.2);
-  color: #d6ffe8;
+  background: var(--success-soft-bg);
+  color: var(--success-soft-text);
   font-size: 12px;
   padding: 8px 10px;
 }
@@ -650,14 +737,14 @@ textarea {
 .landing-panel {
   border-radius: 24px;
   border: 1px solid var(--border);
-  background: linear-gradient(160deg, rgba(22, 27, 42, 0.93) 0%, rgba(15, 18, 28, 0.95) 100%);
+  background: var(--landing-panel-grad);
   box-shadow: var(--shadow);
   padding: 30px;
   animation: landingReveal 0.55s ease both;
 }
 
 .landing-title {
-  font-family: "Playfair Display", serif;
+  font-weight: 700;
   font-size: clamp(30px, 4vw, 46px);
   line-height: 1.1;
   margin: 14px 0 10px;
@@ -706,7 +793,7 @@ textarea {
   margin-top: 18px;
   border-radius: 16px;
   border: 1px solid rgba(249, 199, 79, 0.25);
-  background: rgba(27, 32, 48, 0.72);
+  background: var(--alice-block-bg);
   padding: 14px;
 }
 
@@ -725,7 +812,7 @@ textarea {
   margin-top: 10px;
   border-radius: 12px;
   border: 1px solid rgba(78, 168, 222, 0.25);
-  background: rgba(17, 22, 35, 0.7);
+  background: var(--alice-setup-bg);
   padding: 10px 12px;
 }
 
@@ -764,7 +851,7 @@ textarea {
   border-radius: 8px;
   background: rgba(78, 168, 222, 0.16);
   border: 1px solid rgba(78, 168, 222, 0.3);
-  color: #d8f0ff;
+  color: var(--alice-code-text);
   font-size: 12px;
 }
 
@@ -780,7 +867,7 @@ textarea {
   align-items: center;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #131a29;
+  background: var(--alice-chip-bg);
   padding: 6px 10px;
   font-size: 12px;
 }
@@ -811,13 +898,13 @@ textarea {
   width: 100%;
   padding: 32px;
   border-radius: 24px;
-  background: linear-gradient(160deg, #1d2234 0%, #12151f 100%);
+  background: var(--login-card-grad);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
 
 .login-card h1 {
-  font-family: "Playfair Display", serif;
+  font-weight: 700;
   font-size: 32px;
   margin-bottom: 8px;
 }
@@ -852,7 +939,7 @@ textarea {
   padding: 14px;
   border-radius: 16px;
   border: 1px dashed var(--border);
-  background: rgba(27, 31, 43, 0.6);
+  background: var(--link-box-bg);
 }
 
 .link-text {
@@ -886,7 +973,7 @@ textarea {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(8, 10, 15, 0.65);
+  background: var(--backdrop);
   display: grid;
   place-items: center;
   z-index: 30;
@@ -918,7 +1005,7 @@ textarea {
 .shimmer {
   height: 12px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #1b2030 0%, #2a3045 50%, #1b2030 100%);
+  background: linear-gradient(90deg, var(--shimmer-a) 0%, var(--shimmer-b) 50%, var(--shimmer-a) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
 }
@@ -933,6 +1020,10 @@ textarea {
 }
 
 @media (max-width: 960px) {
+  :root {
+    --shadow: 0 10px 24px rgba(28, 35, 51, 0.1);
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
     padding-bottom: 72px;

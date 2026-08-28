@@ -182,6 +182,9 @@ export default function App() {
   const [renameDialog, setRenameDialog] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [showAliceDetails, setShowAliceDetails] = useState(false);
+  const [priceEditId, setPriceEditId] = useState(null);
+  const [priceEditValue, setPriceEditValue] = useState("");
+  const skipPriceSaveRef = useRef(false);
 
   const [groups, setGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
@@ -505,6 +508,28 @@ export default function App() {
     setPriceDialogItem(item);
     setPriceDialogCheck(checkOnSave);
     setPriceInput(item?.price != null ? String(item.price) : "");
+  };
+
+  const openInlinePrice = (item) => {
+    setPriceEditValue(item?.price != null ? String(item.price) : "");
+    skipPriceSaveRef.current = false;
+    setPriceEditId(item.id);
+  };
+
+  const saveInlinePrice = (item) => {
+    if (skipPriceSaveRef.current) {
+      skipPriceSaveRef.current = false;
+      setPriceEditId(null);
+      return;
+    }
+    const normalized = priceEditValue.replace(",", ".").trim();
+    const parsed = normalized ? Number(normalized) : null;
+    setPriceEditId(null);
+    if (parsed !== null && !Number.isNaN(parsed) && parsed !== item.price) {
+      handleUpdateItem(item.id, null, parsed).catch((e) =>
+        showToast(e.message || "Не удалось обновить стоимость")
+      );
+    }
   };
 
   const openEditItemDialog = (item) => {
@@ -1393,11 +1418,6 @@ export default function App() {
             </span>
             {!isOnline ? <span className="pill pill-muted">Оффлайн</span> : null}
             {groupDetail ? <span className="pill">{pluralMembers(groupDetail.members.length)}</span> : null}
-            {groupDetail && isAdmin ? (
-              <button className="btn btn-ghost" onClick={handleDeleteGroup}>
-                Удалить группу
-              </button>
-            ) : null}
             <button className="btn btn-secondary" onClick={handleCreateAliceCode}>
               Алиса
             </button>
@@ -1741,10 +1761,49 @@ export default function App() {
                             >
                               <div className="item-title-row">
                                 <div className="item-title">{item.text}</div>
-                                {item.price != null ? (
-                                  <span className="price-chip">{formatPrice(item.price)} ₽</span>
+                                {priceEditId === item.id ? (
+                                  <input
+                                    className="input price-inline-input"
+                                    autoFocus
+                                    inputMode="decimal"
+                                    placeholder="Цена, ₽"
+                                    value={priceEditValue}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => setPriceEditValue(e.target.value)}
+                                    onBlur={() => saveInlinePrice(item)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        saveInlinePrice(item);
+                                      }
+                                      if (e.key === "Escape") {
+                                        skipPriceSaveRef.current = true;
+                                        setPriceEditId(null);
+                                      }
+                                    }}
+                                  />
+                                ) : item.price != null ? (
+                                  <span
+                                    className="price-chip"
+                                    title="Изменить цену"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openInlinePrice(item);
+                                    }}
+                                  >
+                                    {formatPrice(item.price)} ₽
+                                  </span>
                                 ) : (
-                                  <span className="chip chip-muted-action">Указать цену</span>
+                                  <span
+                                    className="chip chip-muted-action"
+                                    title="Указать цену"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openInlinePrice(item);
+                                    }}
+                                  >
+                                    Указать цену
+                                  </span>
                                 )}
                               </div>
                               <div className="item-meta item-created muted">Создан: {formatDate(item.createdAt)}</div>
@@ -1881,6 +1940,13 @@ export default function App() {
                   <h3>Участники</h3>
                   <span className="muted">{showMembers ? "▲" : "▼"}</span>
                 </div>
+                {isAdmin ? (
+                  <div style={{ marginBottom: 12 }}>
+                    <button className="btn btn-ghost danger-text" onClick={handleDeleteGroup}>
+                      Удалить группу
+                    </button>
+                  </div>
+                ) : null}
                 <AddMemberForm
                   token={token}
                   groupId={groupDetail.id}
@@ -2264,25 +2330,25 @@ function ItemCreateForm({ onCreate, placeholder }) {
 }
 
 function AddMemberForm({ token, groupId, onMemberAdded, onInviteCreated }) {
-  const [login, setLogin] = useState("");
-  const [telegramUsername, setTelegramUsername] = useState("");
+  const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!login.trim() && !telegramUsername.trim()) return;
+    const trimmed = value.trim();
+    if (!trimmed) return;
     setLoading(true);
     try {
-      await api.addMember(token, groupId, {
-        login: login.trim() || null,
-        telegramUsername: telegramUsername.trim() || null
-      });
-      setLogin("");
-      setTelegramUsername("");
+      const payload = trimmed.startsWith("@")
+        ? { login: null, telegramUsername: trimmed.slice(1) }
+        : { login: trimmed, telegramUsername: null };
+      await api.addMember(token, groupId, payload);
+      setValue("");
       onMemberAdded();
     } catch (e) {
       if (e.code === "USER_NOT_FOUND") {
         const invite = await api.createInvite(token, groupId, 48);
         onInviteCreated(invite);
+        setValue("");
       } else {
         throw e;
       }
@@ -2294,12 +2360,19 @@ function AddMemberForm({ token, groupId, onMemberAdded, onInviteCreated }) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <div className="row">
-        <input className="input" placeholder="Логин" value={login} onChange={(e) => setLogin(e.target.value)} />
-        <input className="input" placeholder="Telegram username" value={telegramUsername} onChange={(e) => setTelegramUsername(e.target.value)} />
+        <input
+          className="input"
+          placeholder="@username или логин участника"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <button className="btn" type="submit" disabled={loading}>
+          Добавить
+        </button>
       </div>
-      <button className="btn" type="submit" style={{ marginTop: 12 }} disabled={loading}>
-        Добавить участника
-      </button>
+      <div className="muted" style={{ marginTop: 8 }}>
+        Укажите @username из Telegram или логин. Если участника ещё нет в сервисе — создадим ссылку-приглашение, просто отправьте её ему.
+      </div>
     </form>
   );
 }
@@ -2321,12 +2394,17 @@ function InviteCreateForm({ token, groupId, onInvite }) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
       <div className="row">
-        <input
+        <select
           className="input"
-          placeholder="Срок (часы)"
           value={expiresInHours}
           onChange={(e) => setExpiresInHours(e.target.value)}
-        />
+          aria-label="Срок действия ссылки"
+        >
+          <option value="24">Сутки</option>
+          <option value="48">2 дня</option>
+          <option value="168">Неделя</option>
+          <option value="720">Месяц</option>
+        </select>
         <button className="btn" type="submit" disabled={loading}>
           Создать ссылку
         </button>
