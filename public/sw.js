@@ -1,4 +1,4 @@
-const CACHE_NAME = "shopping-web-v1";
+const CACHE_NAME = "shopping-web-v2";
 const CORE_ASSETS = [
   "/",
   "/index.html",
@@ -28,6 +28,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith("/api/")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
