@@ -1964,18 +1964,16 @@ export default function App() {
                                         {formatPrice(item.price)} ₽{item.unit === "kg" ? "/кг" : ""}
                                       </span>
                                     ) : null}
-                                    {hasCustomQuantity(item) ? (
-                                      <span
-                                        className="chip"
-                                        title="Изменить количество"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          openInlinePrice(item);
-                                        }}
-                                      >
-                                        {formatQuantity(item.quantity)} {item.unit === "kg" ? "кг" : "шт"}
-                                      </span>
-                                    ) : null}
+                                    <span
+                                      className="chip"
+                                      title="Изменить количество и единицу"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openInlinePrice(item);
+                                      }}
+                                    >
+                                      {formatQuantity(item.quantity)} {item.unit === "kg" ? "кг" : "шт"}
+                                    </span>
                                     {item.price != null && hasCustomQuantity(item) ? (
                                       <span
                                         className="price-chip"
@@ -2037,6 +2035,17 @@ export default function App() {
                                     }}
                                   >
                                     Редактировать
+                                  </button>
+                                  <button
+                                    className="menu-item"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      closeItemMenu();
+                                      openInlinePrice(item);
+                                    }}
+                                  >
+                                    Количество
                                   </button>
                                   <button
                                     className="menu-item"
