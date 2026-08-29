@@ -47,8 +47,7 @@
   --active-group-grad: linear-gradient(140deg, rgba(249, 199, 79, 0.16), rgba(34, 40, 64, 0.4));
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
+:root[data-theme="light"] {
     --bg: #f4f6fb;
     --bg-soft: #eef1f8;
     --card: #ffffff;
@@ -89,7 +88,6 @@
     --landing-panel-grad: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 246, 251, 0.97) 100%);
     --login-card-grad: linear-gradient(160deg, #ffffff 0%, #f6f8fd 100%);
     --active-group-grad: linear-gradient(140deg, rgba(249, 199, 79, 0.3), rgba(78, 168, 222, 0.12));
-  }
 }
 
 * {
@@ -977,6 +975,13 @@ textarea {
   box-shadow: var(--shadow);
 }
 
+.theme-toggle-login {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
+}
+
 .login-card h1 {
   font-weight: 700;
   font-size: 32px;
@@ -1094,7 +1099,8 @@ textarea {
 }
 
 @media (max-width: 960px) {
-  :root {
+  :root,
+  :root[data-theme="light"] {
     --shadow: 0 10px 24px rgba(28, 35, 51, 0.1);
   }
 
